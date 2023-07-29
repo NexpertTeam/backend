@@ -14,7 +14,7 @@ class Claude:
         prompt: Optional[str] = None,
         keep_state: bool = True,
         model: str = "claude-2",
-        max_tokens_to_sample: int = 300,
+        max_tokens_to_sample: int = 16_000,
         **kwargs,
     ):
         self.messages = []
@@ -27,7 +27,7 @@ class Claude:
 
     def __call__(
         self,
-        prompt: Optional[str] = None,
+        prompt: str,
         input_role_or_prefix: str = "user",
         output_role_or_suffix: str = "assistant",
     ) -> str:
@@ -49,8 +49,7 @@ class Claude:
         else:
             suffix = output_role_or_suffix
 
-        if prompt is not None:
-            input_prompt = "".join(self.messages) + prefix + prompt + suffix
+        input_prompt = "".join(self.messages) + prefix + prompt + suffix
 
         completion = anthropic.completions.create(
             model=self.model,
