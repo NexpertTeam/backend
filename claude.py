@@ -52,8 +52,6 @@ class Claude:
         if prompt is not None:
             input_prompt = "".join(self.messages) + prefix + prompt + suffix
 
-        print("Sending input: ", input_prompt)
-
         completion = anthropic.completions.create(
             model=self.model,
             max_tokens_to_sample=self.max_tokens_to_sample,
