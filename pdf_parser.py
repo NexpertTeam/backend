@@ -1,4 +1,4 @@
-from pypdf import PdfReader
+from PyPDF2 import PdfReader
 
 
 def pdf_to_text(path_to_pdf: str) -> str:
