@@ -10,18 +10,18 @@ def parse_insights(insights_text: str) -> dict:
     references = extract_tag_content(insights_text, tag="bibitem")
     reference_list = []
     for ref in references:
-        bibkey = extract_tag_content(ref, tag="bibkey")
-        reference_text = extract_tag_content(ref, tag="reference_text")
+        [bibkey] = extract_tag_content(ref, tag="bibkey")
+        [reference_text] = extract_tag_content(ref, tag="reference_text")
         reference_list.append({"bibkey": bibkey, "reference_text": reference_text})
         print(reference_list)
     output["references"] = reference_list
     ideas = extract_tag_content(insights_text, tag="idea")
     idea_list = []
     for idea in ideas:
-        description = extract_tag_content(idea, tag="description")
+        [description] = extract_tag_content(idea, tag="description")
         relevant_references = extract_tag_content(idea, tag="relevant_references")
         relevant_references = [
-            extract_tag_content(ref, tag="bibkey") for ref in relevant_references
+            extract_tag_content(ref, tag="bibkey")[0] for ref in relevant_references
         ]
         idea_list.append(
             {"description": description, "relevant_references": relevant_references}
