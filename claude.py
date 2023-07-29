@@ -11,7 +11,7 @@ anthropic = Anthropic()  # defaults to os.environ.get("ANTHROPIC_API_KEY")
 class Claude:
     def __init__(
         self,
-        prompt: Optional[str] = None,
+        prompt: str,
         keep_state: bool = True,
         model: str = "claude-2",
         max_tokens_to_sample: int = 300,
@@ -49,8 +49,7 @@ class Claude:
         else:
             suffix = output_role_or_suffix
 
-        if prompt is not None:
-            input_prompt = "".join(self.messages) + prefix + prompt + suffix
+        input_prompt = "".join(self.messages) + prefix + prompt + suffix
 
         completion = anthropic.completions.create(
             model=self.model,
