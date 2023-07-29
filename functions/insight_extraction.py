@@ -62,6 +62,8 @@ def extract_key_insights(paper_text: str) -> dict:
     === Paper text ===
     {paper_text}
 
+    Aim for 4-6 individual ideas.
+
     {AI_PROMPT} I have identified the paper's title and authors and will ignore it, beyond that, these are the most important references from previous work:
     """
     insights = Claude()(prompt, output_role_or_suffix="")
