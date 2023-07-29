@@ -63,3 +63,11 @@ class Claude:
             self.messages.append(suffix + completion)
 
         return completion
+
+
+if __name__ == '__main__':
+    chat = Claude()
+    response = chat("Hello")
+    print(response)
+    response = chat("How are you?")
+    print(response)
