@@ -1,11 +1,13 @@
-from typing import List
+from typing import List, Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
+from claude import Claude
+import arxivScript
 
 class RetrieveArxivSearchInput(BaseModel):
     query: str
-    numRecentPapers: str | 5
-    numMostCitedPapers: str | 5
+    numRecentPapers: Optional[str]
+    numMostCitedPapers: Optional[str]
 
 class TopPaper(BaseModel):
     url: str
@@ -15,9 +17,13 @@ class TopPaper(BaseModel):
     reference: str
     bibtexCitation: str
 
-class RetrieveArxivSearchOutput(BaseModel):
+class Paper(BaseModel):
     url: str
-
+    title: str
+    summary: str
+    publishedDate: str
+class RetrieveArxivSearchOutput(BaseModel):
+    papers: List[Paper]
 class ConceptNodes(BaseModel):
     referenceUrl: str
     description: str
@@ -32,15 +38,14 @@ app = FastAPI()
 def read_root():
     return {"Hello": "World"}
 
+# public-facing endpoint
 @app.post("/query")
 def send_query(query: str) -> None:
-    # TODO
-    return
+    return retrieve_arxiv_search(query)
 
 @app.get("/retrieve-arxiv-search")
 def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> RetrieveArxivSearchOutput:
-    # TODO
-    return 
+    return arxivScript.search_arxiv(input)
 
 @app.get("/top-paper")
 def get_top_paper(url: str) -> TopPaper:
