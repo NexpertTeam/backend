@@ -6,14 +6,16 @@ from xml_parser import extract_tag_content
 
 def parse_insights(insights_text: str) -> dict:
     output = {}
-    references = extract_tag_content(insights_text, tag="references")
+    [references] = extract_tag_content(insights_text, tag="references")
+    references = extract_tag_content(insights_text, tag="bibitem")
     reference_list = []
     for ref in references:
         bibkey = extract_tag_content(ref, tag="bibkey")
         reference_text = extract_tag_content(ref, tag="reference_text")
         reference_list.append({"bibkey": bibkey, "reference_text": reference_text})
+        print(reference_list)
     output["references"] = reference_list
-    ideas = extract_tag_content(insights_text, tag="ideas")
+    ideas = extract_tag_content(insights_text, tag="idea")
     idea_list = []
     for idea in ideas:
         description = extract_tag_content(idea, tag="description")
@@ -67,5 +69,6 @@ def extract_key_insights(paper_text: str) -> dict:
     {AI_PROMPT} I have identified the paper's title and authors and will ignore it, beyond that, these are the most important references from previous work:
     """
     insights = Claude()(prompt, output_role_or_suffix="")
+    print(insights)
     insights = parse_insights(insights)
     return insights
