@@ -6,7 +6,9 @@ def extract_tag_content(input_string, tag):
     pattern = f"<{tag}>(.*?)</{tag}>"
 
     # Find all occurrences of the pattern and return them as a list
-    return re.findall(pattern, input_string)
+    elements = re.findall(pattern, input_string, re.DOTALL)
+    elements = [element.strip() for element in elements]
+    return elements
 
 
 # from lxml import etree

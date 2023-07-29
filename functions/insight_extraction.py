@@ -67,5 +67,6 @@ def extract_key_insights(paper_text: str) -> dict:
     {AI_PROMPT} I have identified the paper's title and authors and will ignore it, beyond that, these are the most important references from previous work:
     """
     insights = Claude()(prompt, output_role_or_suffix="")
+    print(insights)
     insights = parse_insights(insights)
     return insights
