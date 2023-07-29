@@ -15,6 +15,7 @@ class Claude:
         keep_state: bool = True,
         model: str = "claude-2",
         max_tokens_to_sample: int = 300,
+        **kwargs,
     ):
         self.messages = []
         if prompt is not None:
@@ -22,6 +23,7 @@ class Claude:
         self.keep_state = keep_state
         self.model = model
         self.max_tokens_to_sample = max_tokens_to_sample
+        self.kwargs = kwargs
 
     def __call__(
         self,
@@ -56,6 +58,7 @@ class Claude:
             model=self.model,
             max_tokens_to_sample=self.max_tokens_to_sample,
             prompt=input_prompt,
+            **self.kwargs,
         ).completion
 
         if self.keep_state:
@@ -65,7 +68,7 @@ class Claude:
         return completion
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     chat = Claude()
     response = chat("Hello")
     print(response)
