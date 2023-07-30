@@ -1,4 +1,5 @@
 from typing import List, Optional
+import uuid
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -44,12 +45,14 @@ class ConceptNode(BaseModel):
     name: str
     referenceUrl: str
     description: str
-
+    referenceText: Optional[str] = ""
+    id: str
+    parent: Optional[str] = ""
+    children: Optional[List[str]] = []
 
 class PaperInsights(BaseModel):
     url: str
     concepts: List[ConceptNode]
-
 
 class QuerySchema(BaseModel):
     query: str
@@ -88,13 +91,11 @@ def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> str:
     firestore_client.write_data_to_collection(
         collection_name="retrieval", document_name=input.query, data={"papers": papers}
     )
-    print("OOOOOOO")
     return "Success"
 
 
 @app.get("/top-paper")
 def get_top_paper(input: TopPaperQuerySchema) -> str:
-    print(input)
     firestore_client = get_firestore_client()
     result = top_one(input.papers, input.query)
     topPaper = {
@@ -137,11 +138,8 @@ def generate_insights(paper: Paper) -> PaperInsights:
                 description=idea["description"],
             )
         )
-
     paper_insights = PaperInsights(url=pdf_url, concepts=concepts)
-
     return paper_insights
-
 
 @app.post("/expand-graph-with-new-nodes")
 def exapnd_graph_with_new_nodes(concept: ConceptNode) -> PaperInsights:
