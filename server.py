@@ -134,25 +134,26 @@ def send_query(query: Query):
                 # Initialize child first
                 result["-1"][child_concept.id] = {}
             child_result = result["-1"][child_concept.id]
-            try:
-                child_insights = generate_insights(
-                    paper=Paper(url=child_concept.referenceUrl)
-                )
-                for grandchild_concept in child_insights.concepts:
-                    grandchild_concept.parent = child_concept.id
-                    child_concept.children.append(grandchild_concept.id)
-                    firestore_client.write_data_to_collection(
-                        collection_name="graph",
-                        document_name=query.query,
-                        data={grandchild_concept.id: dict(grandchild_concept)},
+            if child_concept.referenceUrl != topPaper["url"]:
+                try:
+                    child_insights = generate_insights(
+                        paper=Paper(url=child_concept.referenceUrl)
                     )
-                    if grandchild_concept.id not in child_result:
-                        # Initialize grand child
-                        child_result[grandchild_concept.id] = {}
-            except Exception as e:
-                error += 1
-                print(f"Something went wrong adding children: {str(e)}")
-                print(e)
+                    for grandchild_concept in child_insights.concepts:
+                        grandchild_concept.parent = child_concept.id
+                        child_concept.children.append(grandchild_concept.id)
+                        firestore_client.write_data_to_collection(
+                            collection_name="graph",
+                            document_name=query.query,
+                            data={grandchild_concept.id: dict(grandchild_concept)},
+                        )
+                        if grandchild_concept.id not in child_result:
+                            # Initialize grand child
+                            child_result[grandchild_concept.id] = {}
+                except Exception as e:
+                    error += 1
+                    print(f"Something went wrong adding children: {str(e)}")
+                    print(e)
 
             firestore_client.write_data_to_collection(
                 collection_name="graph",
