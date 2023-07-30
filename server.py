@@ -2,7 +2,8 @@ from typing import List, Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
 from claude import Claude
-import arxivScript
+import arxiv_script
+from functions.top_one import top_one
 
 class RetrieveArxivSearchInput(BaseModel):
     query: str
@@ -11,11 +12,9 @@ class RetrieveArxivSearchInput(BaseModel):
 
 class TopPaper(BaseModel):
     url: str
-    concept: str
-    shortDescription: str
-    longDescription: str
-    reference: str
-    bibtexCitation: str
+    title: str
+    summary: str
+    publishedDate: str
 
 class Paper(BaseModel):
     url: str
@@ -48,10 +47,10 @@ def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> RetrieveArxivSearc
     return arxivScript.search_arxiv(input)
 
 @app.get("/top-paper")
-def get_top_paper(url: str) -> TopPaper:
-    # TODO 
-    # query claude for best paper given inputs
-    return
+def get_top_paper(userQuery: str, papers: RetrieveArxivSearchOutput) -> TopPaper:
+    result = top_one(papers, userQuery)
+    topPaper = TopPaper(url=result["url"], title=result["title"], summary=result["summary"], publishedDate=result["publishDate"])
+    return topPaper
 
 @app.get("/generate-insights")
 def generate_insights(paper: TopPaper) -> PaperInsights:
