@@ -48,6 +48,9 @@ class PaperInsights(BaseModel):
 class QuerySchema(BaseModel):
     query: str
 
+class TopPaperQuerySchema(BaseModel):
+    userQuery: str
+    papers: RetrieveArxivSearchOutput
 
 app = FastAPI()
 
@@ -73,14 +76,16 @@ def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> RetrieveArxivSearc
 
 
 @app.get("/top-paper")
-def get_top_paper(userQuery: str, papers: RetrieveArxivSearchOutput) -> TopPaper:
-    result = top_one(papers, userQuery)
+def get_top_paper(input: TopPaperQuerySchema) -> TopPaper:
+    # topPaper = TopPaper()
+    result = top_one(input.papers, input.userQuery)
     topPaper = TopPaper(
         url=result["url"],
         title=result["title"],
         summary=result["summary"],
         publishedDate=result["publishDate"],
     )
+    print(topPaper)
     return topPaper
 
 
