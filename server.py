@@ -257,7 +257,7 @@ def generate_insights(paper: Paper) -> PaperInsights:
             url = results[0]["url"]
             # print(url)
         else:
-            url = pdf_url
+            url = ""
         new_uid = str(uuid.uuid4())
         new_concept = ConceptNode(
             name=idea["idea_name"],
