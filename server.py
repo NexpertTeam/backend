@@ -172,6 +172,7 @@ def hydrate_node(input: idGraphSchema):
         result_map = {}
 
         if cur_id == "-1":
+            current_concept = None
             result_map[cur_id] = {
                 "name": input.query,
                 "id": "-1",
@@ -192,6 +193,12 @@ def hydrate_node(input: idGraphSchema):
                 "referenceUrl": current_concept.referenceUrl,
                 "referenceText": current_concept.referenceText,
             }
+
+        if current_concept:
+            parent_concept = concept_map[current_concept.parent]
+            if parent_concept.referenceUrl == current_concept.referenceUrl:
+                # Don't expand children (leaf node to avoid recursion)
+                return result_map[cur_id]
 
         children = []
         children_id_map = id_map[cur_id]
@@ -257,7 +264,7 @@ def generate_insights(paper: Paper) -> PaperInsights:
             url = results[0]["url"]
             # print(url)
         else:
-            url = ""
+            url = pdf_url
         new_uid = str(uuid.uuid4())
         new_concept = ConceptNode(
             name=idea["idea_name"],
