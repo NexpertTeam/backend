@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from anthropic import AI_PROMPT
 
 from claude import Claude
@@ -45,6 +47,7 @@ def parse_insights(insights_text: str) -> dict:
     return output
 
 
+@lru_cache(maxsize=1000)
 def extract_key_insights(paper_text: str) -> dict:
     prompt = f"""List the most important ideas in the paper separate totally novel ideas
     from those that build upon previous work (both are VERY important) and then output the list of ideas in the following format:
@@ -99,6 +102,10 @@ def extract_key_insights(paper_text: str) -> dict:
     {AI_PROMPT} I have identified the paper's title and authors and will ignore it, beyond that, these are the most important references from previous work:
     """
     insights = Claude()(prompt, output_role_or_suffix="")
-    print(insights)
-    insights = parse_insights(insights)
-    return insights
+    try:
+        parsed_insights = parse_insights(insights)
+    except Exception as e:
+        print(f"Failed with:\n{insights}")
+        raise e
+    print(parsed_insights)
+    return parsed_insights

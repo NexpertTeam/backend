@@ -50,9 +50,11 @@ class ConceptNode(BaseModel):
     parent: Optional[str] = ""
     children: Optional[List[str]] = []
 
+
 class PaperInsights(BaseModel):
     url: str
     concepts: List[ConceptNode]
+
 
 class QuerySchema(BaseModel):
     query: str
@@ -179,21 +181,30 @@ def generate_insights(paper: Paper) -> PaperInsights:
 
                 if "arxiv" in reference_text.lower():
                     top_results = arxiv_script.search_arxiv(reference_text)
+                    print(
+                        "=== REF ===\n",
+                        reference_text,
+                        "=== ARXIV RESULTS ===\n",
+                        top_results,
+                    )
                     url = top_results[0]["url"]
+                    break
                 else:
                     print("Skip: ", reference_text)
         else:
             url = pdf_url
         concepts.append(
             ConceptNode(
-                referenceUrl=url,
                 name=idea["idea_name"],
+                id=str(uuid.uuid4()),
+                referenceUrl=url,
                 description=idea["description"],
                 id=str(uuid.uuid4())
             )
         )
     paper_insights = PaperInsights(url=pdf_url, concepts=concepts)
     return paper_insights
+
 
 @app.post("/expand-graph-with-new-nodes")
 def expand_graph_with_new_nodes(input: ExpandGraphWithNewInsightsSchema) -> PaperInsights:
