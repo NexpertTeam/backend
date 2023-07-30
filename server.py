@@ -6,6 +6,7 @@ from pydantic import parse_obj_as
 from claude import Claude
 import arxiv_script
 from functions.top_one import top_one
+from functions.expand_description_to_text import expand, expand_without_paper
 from pdf_parser import pdf_url_to_text
 from functions.insight_extraction import extract_key_insights
 from firebase import get_firestore_client
@@ -132,9 +133,18 @@ def generate_insights(paper: Paper) -> PaperInsights:
     return paper_insights
 
 
-@app.post("/expand-concept")
-def expand_concept(concept: ConceptNode) -> PaperInsights:
+@app.post("/expand-graph-with-new-nodes")
+def exapnd_graph_with_new_nodes(concept: ConceptNode) -> PaperInsights:
     return generate_insights(paper = Paper(url=concept.referenceUrl))
+
+@app.post("/more-info")
+def more_information(concept: ConceptNode) -> str:
+    url = concept.referenceUrl
+    if url == "":
+        return expand_without_paper(concept.description)
+    else:
+        paper_text = pdf_url_to_text(concept.referenceUrl)
+        return expand(concept.description, paper_text)
 
 
 if __name__ == "__main__":
