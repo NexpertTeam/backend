@@ -1,8 +1,10 @@
 from typing import List, Optional
+import uuid
 from fastapi import FastAPI
 from pydantic import BaseModel
 from claude import Claude
 import arxiv_script
+from firebase import get_firestore_client
 
 
 class RetrieveArxivSearchInput(BaseModel):
@@ -26,6 +28,8 @@ class Paper(BaseModel):
     summary: str
     publishedDate: str
 
+class Query(BaseModel):
+    query: str
 
 class RetrieveArxivSearchOutput(BaseModel):
     papers: List[Paper]
@@ -55,13 +59,17 @@ def read_root():
 
 # public-facing endpoint
 @app.post("/query")
-def send_query(query: QuerySchema) -> None:
+def send_query(query: Query) -> None:
+    print("i got here")
     return retrieve_arxiv_search(query.query)
 
 
 @app.get("/retrieve-arxiv-search")
 def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> RetrieveArxivSearchOutput:
-    return arxiv_script.search_arxiv(input)
+    firestore_client = get_firestore_client()
+    papers = arxiv_script.search_arxiv(input)
+    firestore_client.write_data_to_collection(collection_name="retrieval",document_id=input, data={"papers": papers})
+    return 
 
 
 @app.get("/top-paper")
