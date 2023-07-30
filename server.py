@@ -239,8 +239,11 @@ def generate_insights(pdf_url: str) -> PaperInsights:
     paper_text = pdf_url_to_text(pdf_url)
     insights = extract_key_insights(paper_text)
 
-    with open("insight_logs.txt", "a") as f:
-        f.write(json.dumps(insights) + "\n")
+    try:
+        with open("insight_logs.txt", "a", encoding="utf-8") as f:
+            f.write(json.dumps(insights) + "\n")
+    except:
+        pass
 
     references = insights["references"]
     references = {ref["bibkey"]: ref["title"] for ref in references}
