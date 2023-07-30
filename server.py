@@ -9,7 +9,7 @@ from functions.top_one import top_one
 from functions.expand_description_to_text import expand, expand_without_paper
 from pdf_parser import pdf_url_to_text
 from functions.insight_extraction import extract_key_insights
-# from firebase import get_firestore_client
+from firebase import get_firestore_client
 
 
 class RetrieveArxivSearchInput(BaseModel):
