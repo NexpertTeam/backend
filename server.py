@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 import arxiv_script
+from functions.top_one import top_one
 from pdf_parser import pdf_url_to_text
 from functions.insight_extraction import extract_key_insights
 
@@ -16,11 +17,9 @@ class RetrieveArxivSearchInput(BaseModel):
 
 class TopPaper(BaseModel):
     url: str
-    concept: str
-    shortDescription: str
-    longDescription: str
-    reference: str
-    bibtexCitation: str
+    title: str
+    summary: str
+    publishedDate: str
 
 
 class Paper(BaseModel):
@@ -69,10 +68,15 @@ def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> RetrieveArxivSearc
 
 
 @app.get("/top-paper")
-def get_top_paper(url: str) -> TopPaper:
-    # TODO
-    # query claude for best paper given inputs
-    return
+def get_top_paper(userQuery: str, papers: RetrieveArxivSearchOutput) -> TopPaper:
+    result = top_one(papers, userQuery)
+    topPaper = TopPaper(
+        url=result["url"],
+        title=result["title"],
+        summary=result["summary"],
+        publishedDate=result["publishDate"],
+    )
+    return topPaper
 
 
 @app.get("/generate-insights")
