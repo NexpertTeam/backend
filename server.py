@@ -174,17 +174,23 @@ def hydrate_node(input: idGraphSchema):
         if cur_id == "-1":
             result_map[cur_id] = {
                 "name": input.query,
+                "id": "-1",
                 "children": [],
                 "parent": None,
+                "description": None,
                 "referenceUrl": None,
+                "referenceText": None,
             }
         else:
             current_concept = concept_map[cur_id]
             result_map[cur_id] = {
                 "name": current_concept.name,
+                "id": cur_id,
                 "children": [],
                 "parent": current_concept.parent,
+                "description": current_concept.description,
                 "referenceUrl": current_concept.referenceUrl,
+                "referenceText": current_concept.referenceText,
             }
 
         children = []
