@@ -1,10 +1,9 @@
+import time
 from typing import List, Optional
 import uuid
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-from pydantic import parse_obj_as
-from claude import Claude
 import arxiv_script
 from functions.top_one import top_one
 from functions.expand_description_to_text import expand, expand_without_paper
@@ -76,11 +75,10 @@ def read_root():
 def send_query(query: Query) -> None:
     firestore_client = get_firestore_client()
     retrieve_arxiv_search(query)
-    papers = firestore_client.read_from_document(collection_name="retrieval", document_name=query.query)
-    getTopPaperInput = TopPaperQuerySchema(
-        query=query.query,
-        papers=papers
+    papers = firestore_client.read_from_document(
+        collection_name="retrieval", document_name=query.query
     )
+    getTopPaperInput = TopPaperQuerySchema(query=query.query, papers=papers)
     get_top_paper(getTopPaperInput)
 
 
@@ -99,12 +97,16 @@ def get_top_paper(input: TopPaperQuerySchema) -> str:
     firestore_client = get_firestore_client()
     result = top_one(input.papers, input.query)
     topPaper = {
-        "url":result["url"],
-        "title":result["title"],
+        "url": result["url"],
+        "title": result["title"],
         "summary": result["summary"],
         "publishedDate": result["publishDate"],
     }
-    firestore_client.write_data_to_collection(collection_name="retrieval", document_name=input.query, data={"topPaper": topPaper})
+    firestore_client.write_data_to_collection(
+        collection_name="retrieval",
+        document_name=input.query,
+        data={"topPaper": topPaper},
+    )
     return "Success"
 
 
@@ -129,6 +131,8 @@ def generate_insights(paper: Paper) -> PaperInsights:
                 if "arxiv" in reference_text.lower():
                     top_results = arxiv_script.search_arxiv(reference_text)
                     url = top_results[0]["url"]
+                else:
+                    print("Skip: ", reference_text)
         else:
             url = pdf_url
         concepts.append(
@@ -142,16 +146,23 @@ def generate_insights(paper: Paper) -> PaperInsights:
     return paper_insights
 
 @app.post("/expand-graph-with-new-nodes")
-def exapnd_graph_with_new_nodes(concept: ConceptNode) -> PaperInsights:
-    return generate_insights(paper = Paper(url=concept.referenceUrl))
+def expand_graph_with_new_nodes(concept: ConceptNode) -> PaperInsights:
+    insights = generate_insights(paper=Paper(url=concept.referenceUrl))
+    for child_concept in insights.concepts:
+        child_concept.parent_id = concept.id
+    return insights
+
 
 @app.post("/more-info")
 def more_information(concept: ConceptNode) -> str:
     url = concept.referenceUrl
+    things = time.time()
     if url == "":
         return expand_without_paper(concept.description)
     else:
+        print(time.time() - things)
         paper_text = pdf_url_to_text(concept.referenceUrl)
+        print(time.time() - things)
         return expand(concept.description, paper_text)
 
 

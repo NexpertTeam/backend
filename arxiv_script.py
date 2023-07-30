@@ -1,6 +1,9 @@
+from functools import lru_cache
+
 import arxiv
 
 
+@lru_cache(maxsize=100)
 def search_arxiv(query, numRecentPapers=5, numMostCitedPapers=5):
     searchRelevance = arxiv.Search(
         query=query,
@@ -35,5 +38,5 @@ def search_arxiv(query, numRecentPapers=5, numMostCitedPapers=5):
                 "publishedDate": str(result.published),
             }
         )
-    # papers = 
+    # papers =
     return papers
