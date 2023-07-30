@@ -18,6 +18,8 @@ origins = [
     # Add more allowed origins if needed
 ]
 
+concept_map = {}
+
 
 class RetrieveArxivSearchInput(BaseModel):
     query: str
@@ -114,6 +116,11 @@ def send_query(query: Query):
         topPaper = get_top_paper(getTopPaperInput)
     error = 0
     result = {"-1": dict()}
+
+    concept_map["-1"] = ConceptNode(
+        name="query", referenceUrl="", description="", id="-1"
+    )
+
     try:
         insights = generate_insights(paper=Paper(url=topPaper["url"]))
     except Exception as e:
@@ -123,6 +130,10 @@ def send_query(query: Query):
     if insights:
         for child_concept in insights.concepts:
             child_concept.parent = "-1"
+            if child_concept.id not in result["-1"]:
+                # Initialize child first
+                result["-1"][child_concept.id] = {}
+            child_result = result["-1"][child_concept.id]
             try:
                 child_insights = generate_insights(
                     paper=Paper(url=child_concept.referenceUrl)
@@ -135,11 +146,9 @@ def send_query(query: Query):
                         document_name=query.query,
                         data={grandchild_concept.id: dict(grandchild_concept)},
                     )
-                    if child_concept.id not in result["-1"]:
-                        # Initialize child first
-                        result["-1"][child_concept.id] = {}
-
-                    result["-1"][child_concept.id][grandchild_concept.id] = {}
+                    if grandchild_concept.id not in child_result:
+                        # Initialize grand child
+                        child_result[grandchild_concept.id] = {}
             except Exception as e:
                 error += 1
                 print(f"Something went wrong adding children: {str(e)}")
@@ -150,7 +159,7 @@ def send_query(query: Query):
                 document_name=query.query,
                 data={child_concept.id: dict(child_concept)},
             )
-            result["-1"][child_concept.id] = {}
+
     hydrated_graph = hydrate_node(
         input=idGraphSchema(id="-1", query=query.query, id_map=result)
     )
@@ -159,30 +168,35 @@ def send_query(query: Query):
 
 @app.get("/hydrate-node")
 def hydrate_node(input: idGraphSchema):
-    firestore_client = get_firestore_client()
-    result = {}
+    def helper(cur_id, id_map):
+        result_map = {}
 
-    def helper(cur_id, id_map, result_map):
         if cur_id == "-1":
             result_map[cur_id] = {
                 "name": input.query,
-                "children": None,
+                "children": [],
                 "parent": None,
                 "referenceUrl": None,
             }
         else:
-            result_map[cur_id] = firestore_client.read_from_document(
-                collection_name="graph", document_name=input.query
-            )[cur_id]
-        result_map[cur_id]["children"] = []
-        for id in id_map.keys():
-            new_id_map = id_map[id]
-            result_map[id]["children"].append(
-                helper(id, new_id_map, result_map[cur_id])
-            )
+            current_concept = concept_map[cur_id]
+            result_map[cur_id] = {
+                "name": current_concept.name,
+                "children": [],
+                "parent": current_concept.parent,
+                "referenceUrl": current_concept.referenceUrl,
+            }
+
+        children = []
+        children_id_map = id_map[cur_id]
+        for child_id, _ in children_id_map.items():
+            children.append(helper(child_id, children_id_map))
+
+        result_map[cur_id]["children"] = children
+
         return result_map[cur_id]
 
-    return helper(input.id, input.id_map, result)
+    return helper(input.id, input.id_map)
 
 
 @app.get("/retrieve-arxiv-search")
@@ -220,7 +234,7 @@ def generate_insights(paper: Paper) -> PaperInsights:
     insights = extract_key_insights(paper_text)
 
     with open("insight_logs.txt", "a") as f:
-        f.write(json.dumps(insights))
+        f.write(json.dumps(insights) + "\n")
 
     references = insights["references"]
     references = {ref["bibkey"]: ref["title"] for ref in references}
@@ -238,14 +252,15 @@ def generate_insights(paper: Paper) -> PaperInsights:
             # print(url)
         else:
             url = pdf_url
-        concepts.append(
-            ConceptNode(
-                name=idea["idea_name"],
-                id=str(uuid.uuid4()),
-                referenceUrl=url,
-                description=idea["description"],
-            )
+        new_uid = str(uuid.uuid4())
+        new_concept = ConceptNode(
+            name=idea["idea_name"],
+            id=new_uid,
+            referenceUrl=url,
+            description=idea["description"],
         )
+        concept_map[new_uid] = new_concept
+        concepts.append(new_concept)
     paper_insights = PaperInsights(url=pdf_url, concepts=concepts)
     return paper_insights
 
