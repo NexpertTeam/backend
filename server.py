@@ -30,8 +30,10 @@ class Paper(BaseModel):
     summary: str
     publishedDate: str
 
+
 class Query(BaseModel):
     query: str
+
 
 class RetrieveArxivSearchOutput(BaseModel):
     papers: List[Paper]
@@ -71,8 +73,10 @@ def send_query(query: Query) -> None:
 def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> RetrieveArxivSearchOutput:
     firestore_client = get_firestore_client()
     papers = arxiv_script.search_arxiv(input)
-    firestore_client.write_data_to_collection(collection_name="retrieval",document_id=input, data={"papers": papers})
-    return 
+    firestore_client.write_data_to_collection(
+        collection_name="retrieval", document_id=input, data={"papers": papers}
+    )
+    return
 
 
 @app.get("/top-paper")
@@ -105,8 +109,10 @@ def generate_insights(paper: TopPaper) -> PaperInsights:
 
             if "arxiv" in reference_text.lower():
                 # Search paper in arxiv
+                print(f"Searching arxiv for {reference_text}")
                 top_results = arxiv_script.search_arxiv(reference_text)
                 url = top_results[0]["url"]
+                print(f"Paper url: {url}")
             else:
                 url = ""
         else:
