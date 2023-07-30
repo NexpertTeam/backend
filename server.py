@@ -2,7 +2,8 @@ import time
 from typing import List, Optional
 import uuid
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import arxiv_script
 from functions.top_one import top_one
@@ -10,7 +11,6 @@ from functions.expand_description_to_text import expand, expand_without_paper
 from pdf_parser import pdf_url_to_text
 from functions.insight_extraction import extract_key_insights
 from firebase import get_firestore_client
-
 
 class RetrieveArxivSearchInput(BaseModel):
     query: str
@@ -50,6 +50,10 @@ class ConceptNode(BaseModel):
     children: Optional[List[str]] = []
 
 
+class ConceptNodeId(BaseModel):
+    id: str
+
+
 class PaperInsights(BaseModel):
     url: str
     concepts: List[ConceptNode]
@@ -66,6 +70,17 @@ class TopPaperQuerySchema(BaseModel):
 
 app = FastAPI()
 
+origins = [
+    "http://localhost/3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def read_root():
@@ -74,7 +89,10 @@ def read_root():
 
 # public-facing endpoint
 @app.post("/query")
-def send_query(query: Query) -> None:
+async def send_query(request: Request) -> None:
+    data = await request.json()
+    print(data)
+    query=Query(**data)
     firestore_client = get_firestore_client()
     retrieve_arxiv_search(query)
     papers = firestore_client.read_from_document(
@@ -157,7 +175,9 @@ def generate_insights(paper: Paper) -> PaperInsights:
 
 
 @app.post("/expand-graph-with-new-nodes")
-def expand_graph_with_new_nodes(concept: ConceptNode) -> PaperInsights:
+async def expand_graph_with_new_nodes(request: Request) -> PaperInsights:
+    data = await request.json()
+    concept=ConceptNode(**data)
     insights = generate_insights(paper=Paper(url=concept.referenceUrl))
     for child_concept in insights.concepts:
         child_concept.parent = concept.id
@@ -165,7 +185,9 @@ def expand_graph_with_new_nodes(concept: ConceptNode) -> PaperInsights:
 
 
 @app.post("/more-info")
-def more_information(concept: ConceptNode) -> str:
+async def more_information(request: Request) -> str:
+    data = await request.json()
+    concept=ConceptNode(**data)
     url = concept.referenceUrl
     things = time.time()
     if url == "":
