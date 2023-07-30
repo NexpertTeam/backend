@@ -1,3 +1,4 @@
+arxiv == 1.4.8
 anthropic==0.3.6
 anyio==3.7.1
 certifi==2023.7.22
