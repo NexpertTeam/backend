@@ -84,7 +84,7 @@ def get_top_paper(userQuery: str, papers: RetrieveArxivSearchOutput) -> TopPaper
     return topPaper
 
 
-@app.get("/generate-insights")
+@app.post("/generate-insights")
 def generate_insights(paper: TopPaper) -> PaperInsights:
     pdf_url = paper.url
     paper_text = pdf_url_to_text(pdf_url)
