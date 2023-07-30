@@ -26,9 +26,9 @@ class TopPaper(BaseModel):
 
 class Paper(BaseModel):
     url: str
-    title: str
-    summary: str
-    publishedDate: str
+    title: Optional[str] = ""
+    summary: Optional[str] = ""
+    publishedDate: Optional[str] = ""
 
 
 class Query(BaseModel):
@@ -39,7 +39,7 @@ class RetrieveArxivSearchOutput(BaseModel):
     papers: List[Paper]
 
 
-class ConceptNodes(BaseModel):
+class ConceptNode(BaseModel):
     name: str
     referenceUrl: str
     description: str
@@ -47,7 +47,7 @@ class ConceptNodes(BaseModel):
 
 class PaperInsights(BaseModel):
     url: str
-    concepts: List[ConceptNodes]
+    concepts: List[ConceptNode]
 
 
 class QuerySchema(BaseModel):
@@ -92,7 +92,7 @@ def get_top_paper(userQuery: str, papers: RetrieveArxivSearchOutput) -> TopPaper
 
 
 @app.post("/generate-insights")
-def generate_insights(paper: TopPaper) -> PaperInsights:
+def generate_insights(paper: Paper) -> PaperInsights:
     pdf_url = paper.url
     paper_text = pdf_url_to_text(pdf_url)
     insights = extract_key_insights(paper_text)
@@ -115,7 +115,7 @@ def generate_insights(paper: TopPaper) -> PaperInsights:
         else:
             url = ""
         concepts.append(
-            ConceptNodes(
+            ConceptNode(
                 referenceUrl=url,
                 name=idea["idea_name"],
                 description=idea["description"],
@@ -125,6 +125,11 @@ def generate_insights(paper: TopPaper) -> PaperInsights:
     paper_insights = PaperInsights(url=pdf_url, concepts=concepts)
 
     return paper_insights
+
+
+@app.post("/expand-concept")
+def expand_concept(concept: ConceptNode) -> PaperInsights:
+    return generate_insights(paper = Paper(url=concept.referenceUrl))
 
 
 if __name__ == "__main__":
