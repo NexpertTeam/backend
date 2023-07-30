@@ -255,10 +255,13 @@ def generate_insights(pdf_url: str) -> PaperInsights:
         if relevant_references:
             url = ""
             bibkey = relevant_references.pop(0)
-            reference_text = references[bibkey]
-            # print(bibkey, reference_text)
-            results = arxiv_script.search_arxiv(reference_text)
-            url = results[0]["url"]
+
+            # Handle malformed/missing references
+            if bibkey in references:
+                reference_text = references[bibkey]
+                # print(bibkey, reference_text)
+                results = arxiv_script.search_arxiv(reference_text)
+                url = results[0]["url"]
             # print(url)
         else:
             url = pdf_url
@@ -279,7 +282,7 @@ def generate_insights(pdf_url: str) -> PaperInsights:
 @app.post("/expand-graph-with-new-nodes")
 def expand_graph_with_new_nodes(
     input: ExpandGraphWithNewInsightsSchema,
-) -> PaperInsights:
+):
     result = {input.id: {}}
     firestore_client = get_firestore_client()
     insights = generate_insights(pdf_url=input.concept.referenceUrl)
