@@ -130,7 +130,14 @@ def generate_insights(paper: Paper) -> PaperInsights:
 
                 if "arxiv" in reference_text.lower():
                     top_results = arxiv_script.search_arxiv(reference_text)
+                    print(
+                        "=== REF ===\n",
+                        reference_text,
+                        "=== ARXIV RESULTS ===\n",
+                        top_results,
+                    )
                     url = top_results[0]["url"]
+                    break
                 else:
                     print("Skip: ", reference_text)
         else:
@@ -148,8 +155,8 @@ def generate_insights(paper: Paper) -> PaperInsights:
 @app.post("/expand-graph-with-new-nodes")
 def expand_graph_with_new_nodes(concept: ConceptNode) -> PaperInsights:
     insights = generate_insights(paper=Paper(url=concept.referenceUrl))
-    for child_concept in insights.concepts:
-        child_concept.parent_id = concept.id
+    # for child_concept in insights.concepts:
+    #     child_concept.parent_id = concept.id
     return insights
 
 
