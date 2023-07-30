@@ -15,6 +15,7 @@ class Claude:
         keep_state: bool = True,
         model: str = "claude-2",
         max_tokens_to_sample: int = 16_000,
+        temperature: float = 0.0,
         **kwargs,
     ):
         self.messages = []
@@ -23,6 +24,7 @@ class Claude:
         self.keep_state = keep_state
         self.model = model
         self.max_tokens_to_sample = max_tokens_to_sample
+        self.temperature = temperature
         self.kwargs = kwargs
 
     def __call__(
@@ -52,9 +54,10 @@ class Claude:
         input_prompt = "".join(self.messages) + prefix + prompt + suffix
 
         completion = anthropic.completions.create(
+            prompt=input_prompt,
             model=self.model,
             max_tokens_to_sample=self.max_tokens_to_sample,
-            prompt=input_prompt,
+            temperature=self.temperature,
             **self.kwargs,
         ).completion
 
