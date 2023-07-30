@@ -10,7 +10,12 @@ from functions.expand_description_to_text import expand, expand_without_paper
 from pdf_parser import pdf_url_to_text
 from functions.insight_extraction import extract_key_insights
 from firebase import get_firestore_client
+from fastapi.middleware.cors import CORSMiddleware
 
+origins = [
+    "http://localhost:3000",  # Replace with your frontend's URL
+    # Add more allowed origins if needed
+]
 
 
 class RetrieveArxivSearchInput(BaseModel):
@@ -73,6 +78,14 @@ class idGraphSchema(BaseModel):
     id: str
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -190,7 +203,6 @@ def generate_insights(paper: Paper) -> PaperInsights:
                 id=str(uuid.uuid4()),
                 referenceUrl=url,
                 description=idea["description"],
-                id=str(uuid.uuid4())
             )
         )
     paper_insights = PaperInsights(url=pdf_url, concepts=concepts)
