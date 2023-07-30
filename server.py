@@ -54,9 +54,11 @@ class PaperInsights(BaseModel):
 class QuerySchema(BaseModel):
     query: str
 
+
 class TopPaperQuerySchema(BaseModel):
     userQuery: str
     papers: RetrieveArxivSearchOutput
+
 
 app = FastAPI()
 
@@ -119,7 +121,7 @@ def generate_insights(paper: Paper) -> PaperInsights:
             else:
                 url = ""
         else:
-            url = ""
+            url = pdf_url
         concepts.append(
             ConceptNode(
                 referenceUrl=url,
