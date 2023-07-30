@@ -113,7 +113,7 @@ def send_query(query: Query):
     except:
         topPaper = get_top_paper(getTopPaperInput)
     error = 0
-    result = {"-1": {}}
+    result = {"-1": dict()}
     try:
         insights = generate_insights(paper=Paper(url=topPaper["url"]))
     except Exception as e:
@@ -135,6 +135,10 @@ def send_query(query: Query):
                         document_name=query.query,
                         data={grandchild_concept.id: dict(grandchild_concept)},
                     )
+                    if child_concept.id not in result["-1"]:
+                        # Initialize child first
+                        result["-1"][child_concept.id] = {}
+
                     result["-1"][child_concept.id][grandchild_concept.id] = {}
             except Exception as e:
                 error += 1
