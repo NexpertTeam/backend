@@ -40,10 +40,22 @@ def top_one(list_of_jsons, user_query):
     # print(topPaper)
     response = topPaper.split("<response>")[1].split("</response>")[0].replace("'", "\"")
     print(response)
-    title = topPaper.split("<title>")[1].split("</title>")[0].replace("'", "\"")
-    summary = topPaper.split("<summary>")[1].split("</summary>")[0].replace("'", "\"")
-    url = topPaper.split("<url>")[1].split("</url>")[0].replace("'", "\"")
-    date = topPaper.split("<publishdate>")[1].split("</pulishdate>")[0].replace("'", "\"")
+    try:
+        title = topPaper.split("<title>")[1].split("</title>")[0].replace("'", "\"")
+    except:
+        title="Nothing"
+    try:
+        summary = topPaper.split("<summary>")[1].split("</summary>")[0].replace("'", "\"")
+    except:
+        summary="Nothing"
+    try:
+        url = topPaper.split("<url>")[1].split("</url>")[0].replace("'", "\"")
+    except:
+        url="https://arxiv.org/pdf/2307.04355.pdf"
+    try:
+        date = topPaper.split("<publishdate>")[1].split("</pulishdate>")[0].replace("'", "\"")
+    except:
+        date="1900-02-23"
     objectToBuild = {
         "title": title,
         "summary": summary,

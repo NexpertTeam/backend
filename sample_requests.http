@@ -101,3 +101,12 @@ content-type: application/json
     "referenceUrl": "https://arxiv.org/pdf/2307.12008.pdf",
     "description": "Interface superconductivity"
 }
+
+###
+
+POST http://0.0.0.0:8000/generate-insights
+Content-type: application/json
+
+{
+    "url": "https://arxiv.org/pdf/2307.12008.pdf"
+}

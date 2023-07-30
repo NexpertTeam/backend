@@ -9,7 +9,7 @@ from functions.top_one import top_one
 from functions.expand_description_to_text import expand, expand_without_paper
 from pdf_parser import pdf_url_to_text
 from functions.insight_extraction import extract_key_insights
-from firebase import get_firestore_client
+# from firebase import get_firestore_client
 
 
 class RetrieveArxivSearchInput(BaseModel):
@@ -119,29 +119,19 @@ def generate_insights(paper: Paper) -> PaperInsights:
     insights = extract_key_insights(paper_text)
 
     references = insights["references"]
-    references = {ref["bibkey"]: ref["reference_text"] for ref in references}
+    references = {ref["bibkey"]: ref["title"] for ref in references}
 
     concepts = []
     for idea in insights["ideas"]:
         relevant_references = idea["relevant_references"]
         if relevant_references:
             url = ""
-            while relevant_references and not url:
-                bibkey = relevant_references.pop(0)
-                reference_text = references[bibkey]
-
-                if "arxiv" in reference_text.lower():
-                    top_results = arxiv_script.search_arxiv(reference_text)
-                    print(
-                        "=== REF ===\n",
-                        reference_text,
-                        "=== ARXIV RESULTS ===\n",
-                        top_results,
-                    )
-                    url = top_results[0]["url"]
-                    break
-                else:
-                    print("Skip: ", reference_text)
+            bibkey = relevant_references.pop(0)
+            reference_text = references[bibkey]
+            # print(bibkey, reference_text)
+            results = arxiv_script.search_arxiv(reference_text)
+            url = results[0]["url"]
+            # print(url)
         else:
             url = pdf_url
         concepts.append(

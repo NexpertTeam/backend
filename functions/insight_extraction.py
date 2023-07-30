@@ -14,7 +14,8 @@ def parse_insights(insights_text: str) -> dict:
     for ref in references:
         [bibkey] = extract_tag_content(ref, tag="bibkey")
         [reference_text] = extract_tag_content(ref, tag="reference_text")
-        reference_list.append({"bibkey": bibkey, "reference_text": reference_text})
+        [title] = extract_tag_content(ref, tag="title")
+        reference_list.append({"bibkey": bibkey, "reference_text": reference_text, "title": title})
     output["references"] = reference_list
     new_ideas = extract_tag_content(insights_text, tag="novel_idea")
     idea_list = []
@@ -56,6 +57,9 @@ def extract_key_insights(paper_text: str) -> dict:
             <bibkey>
                 # Bibtext friendly ID
             </bibkey>
+            <title>
+                # TITLE of the reference paper
+            </title>
             <reference_text>
                 # APA formatted reference
             </reference_text>
@@ -107,5 +111,5 @@ def extract_key_insights(paper_text: str) -> dict:
     except Exception as e:
         print(f"Failed with:\n{insights}")
         raise e
-    print(parsed_insights)
+    # print(parsed_insights)
     return parsed_insights
