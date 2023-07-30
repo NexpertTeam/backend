@@ -78,3 +78,14 @@ content-type: application/json
         ]
     }
 }
+
+###
+
+POST http://0.0.0.0:8000/expand-concept
+content-type: application/json
+
+{
+    "name": "Attention mechanism",
+    "referenceUrl": "http://arxiv.org/pdf/1409.0473v7",
+    "description": "The paper proposes an attention mechanism that allows the decoder to focus on relevant parts of the source sentence when generating each word in the translation. This is more flexible than encoding the full source sentence into a fixed vector."
+}
