@@ -15,6 +15,7 @@ def parse_insights(insights_text: str) -> dict:
         [bibkey] = extract_tag_content(ref, tag="bibkey")
         bibkey = bibkey.strip()
         bibkey = bibkey.strip("\n")
+        bibkey = bibkey.strip("\\n")
         bibkey = bibkey.strip()
         [reference_text] = extract_tag_content(ref, tag="reference_text")
         [title] = extract_tag_content(ref, tag="title")
@@ -40,7 +41,11 @@ def parse_insights(insights_text: str) -> dict:
         [description] = extract_tag_content(idea, tag="description")
         relevant_references = extract_tag_content(idea, tag="relevant_references")
         relevant_references = [
-            extract_tag_content(ref, tag="bibkey")[0].strip().strip("\n").strip()
+            extract_tag_content(ref, tag="bibkey")[0]
+            .strip()
+            .strip("\n")
+            .strip("\\n")
+            .strip()
             for ref in relevant_references
         ]
         idea_list.append(
