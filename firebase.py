@@ -8,15 +8,21 @@ class Firebase:
         firebase_admin.initialize_app(cred)
         self.db = firestore.client()
     
-    def read_from_collection(self, collection_name: str):
-        collections = self.db.collection(collection_name)
-        docs = collections.get()
-        for doc in docs:
-            print(doc.to_dict())
+    def read_from_document(self, collection_name: str, document_name: str):
+        doc_ref = self.db.collection(collection_name).document(document_name)
+        doc_snapshot = doc_ref.get()
+        print(doc_snapshot)
+        if doc_snapshot.exists:
+            document_data = doc_snapshot.to_dict()
+            return document_data
+        else:
+            # Document does not exist
+            return None
         
-    def write_data_to_collection(self, collection_name: str, document_id: str, data):
+    def write_data_to_collection(self, collection_name: str, document_name: str, data):
+        print(collection_name, document_name, data)
         collection_ref = self.db.collection(collection_name)
-        doc_ref = collection_ref.document(document_id).set(data)
+        doc_ref = collection_ref.document(document_name).set(data)
         print(f"Document added: {doc_ref}")
 
     def delete_data_from_collection(self, collection_name, document_id):
