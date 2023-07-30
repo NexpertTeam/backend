@@ -1,9 +1,10 @@
 from claude import Claude
-import json
+
 
 def top_one(list_of_jsons, user_query):
     top_one = Claude()
-    topPaper = top_one(f"""I have a set of papers. I also have a query string from a user trying to figure out which paper is most relevant for them. The papers are in the following format:
+    topPaper = top_one(
+        f"""I have a set of papers. I also have a query string from a user trying to figure out which paper is most relevant for them. The papers are in the following format:
 
     {{
 
@@ -36,31 +37,39 @@ def top_one(list_of_jsons, user_query):
         <url> (URL OF THE SELECTED PAPER) </url>
         <publishdate> (PUBLISH DATE OF THE SELECTED PAPER) </publishdate>
     </response>
-    """)
+    """
+    )
     # print(topPaper)
-    response = topPaper.split("<response>")[1].split("</response>")[0].replace("'", "\"")
-    print(response)
+    # response = topPaper.split("<response>")[1].split("</response>")[0].replace("'", "\"")
+    # print(response)
+
     try:
-        title = topPaper.split("<title>")[1].split("</title>")[0].replace("'", "\"")
+        title = topPaper.split("<title>")[1].split("</title>")[0].replace("'", '"')
     except:
-        title="Nothing"
+        title = "Nothing"
     try:
-        summary = topPaper.split("<summary>")[1].split("</summary>")[0].replace("'", "\"")
+        summary = (
+            topPaper.split("<summary>")[1].split("</summary>")[0].replace("'", '"')
+        )
     except:
-        summary="Nothing"
+        summary = "Nothing"
     try:
-        url = topPaper.split("<url>")[1].split("</url>")[0].replace("'", "\"")
+        url = topPaper.split("<url>")[1].split("</url>")[0].replace("'", '"')
     except:
-        url="https://arxiv.org/pdf/2307.04355.pdf"
+        raise ValueError("Top paper could not be parsed")
+        # url="https://arxiv.org/pdf/2307.04355.pdf"
     try:
-        date = topPaper.split("<publishdate>")[1].split("</pulishdate>")[0].replace("'", "\"")
+        date = (
+            topPaper.split("<publishdate>")[1]
+            .split("</pulishdate>")[0]
+            .replace("'", '"')
+        )
     except:
-        date="1900-02-23"
+        date = "1900-02-23"
     objectToBuild = {
         "title": title,
         "summary": summary,
         "url": url,
-        "publishDate": date
+        "publishDate": date,
     }
     return objectToBuild
-
