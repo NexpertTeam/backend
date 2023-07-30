@@ -1,6 +1,7 @@
 import os
 import requests
 import tempfile
+from functools import lru_cache
 
 from PyPDF2 import PdfReader
 
@@ -18,7 +19,7 @@ def pdf_to_text(path_to_pdf: str) -> str:
         text += page.extract_text()
     return text
 
-
+@lru_cache(maxsize=30)
 def download_pdf(url):
     # Send a GET request to the URL
     response = requests.get(url)

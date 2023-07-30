@@ -56,7 +56,7 @@ class QuerySchema(BaseModel):
 
 
 class TopPaperQuerySchema(BaseModel):
-    userQuery: str
+    query: str
     papers: RetrieveArxivSearchOutput
 
 
@@ -71,32 +71,40 @@ def read_root():
 # public-facing endpoint
 @app.post("/query")
 def send_query(query: Query) -> None:
-    print("i got here")
-    return retrieve_arxiv_search(query.query)
+    firestore_client = get_firestore_client()
+    retrieve_arxiv_search(query)
+    papers = firestore_client.read_from_document(collection_name="retrieval", document_name=query.query)
+    getTopPaperInput = TopPaperQuerySchema(
+        query=query.query,
+        papers=papers
+    )
+    get_top_paper(getTopPaperInput)
 
 
 @app.get("/retrieve-arxiv-search")
-def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> RetrieveArxivSearchOutput:
+def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> str:
     firestore_client = get_firestore_client()
     papers = arxiv_script.search_arxiv(input)
     firestore_client.write_data_to_collection(
-        collection_name="retrieval", document_id=input, data={"papers": papers}
+        collection_name="retrieval", document_name=input.query, data={"papers": papers}
     )
-    return
+    print("OOOOOOO")
+    return "Success"
 
 
 @app.get("/top-paper")
-def get_top_paper(input: TopPaperQuerySchema) -> TopPaper:
-    # topPaper = TopPaper()
-    result = top_one(input.papers, input.userQuery)
-    topPaper = TopPaper(
-        url=result["url"],
-        title=result["title"],
-        summary=result["summary"],
-        publishedDate=result["publishDate"],
-    )
-    print(topPaper)
-    return topPaper
+def get_top_paper(input: TopPaperQuerySchema) -> str:
+    print(input)
+    firestore_client = get_firestore_client()
+    result = top_one(input.papers, input.query)
+    topPaper = {
+        "url":result["url"],
+        "title":result["title"],
+        "summary": result["summary"],
+        "publishedDate": result["publishDate"],
+    }
+    firestore_client.write_data_to_collection(collection_name="retrieval", document_name=input.query, data={"topPaper": topPaper})
+    return "Success"
 
 
 @app.post("/generate-insights")
@@ -112,14 +120,14 @@ def generate_insights(paper: Paper) -> PaperInsights:
     for idea in insights["ideas"]:
         relevant_references = idea["relevant_references"]
         if relevant_references:
-            first_bibkey = relevant_references[0]
-            reference_text = references[first_bibkey]
+            url = ""
+            while relevant_references and not url:
+                bibkey = relevant_references.pop(0)
+                reference_text = references[bibkey]
 
-            if "arxiv" in reference_text.lower():
-                top_results = arxiv_script.search_arxiv(reference_text)
-                url = top_results[0]["url"]
-            else:
-                url = ""
+                if "arxiv" in reference_text.lower():
+                    top_results = arxiv_script.search_arxiv(reference_text)
+                    url = top_results[0]["url"]
         else:
             url = pdf_url
         concepts.append(
