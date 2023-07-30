@@ -1,3 +1,4 @@
+import json
 import time
 from typing import List, Optional
 import uuid
@@ -69,15 +70,18 @@ class TopPaperQuerySchema(BaseModel):
     query: str
     papers: RetrieveArxivSearchOutput
 
+
 class ExpandGraphWithNewInsightsSchema(BaseModel):
     id: str
     query: str
     concept: ConceptNode
 
+
 class idGraphSchema(BaseModel):
     id_map: dict
     query: str
     id: str
+
 
 app = FastAPI()
 
@@ -112,29 +116,42 @@ def send_query(query: Query):
     result = {"-1": {}}
     try:
         insights = generate_insights(paper=Paper(url=topPaper["url"]))
-    except:
+    except Exception as e:
         insights = []
-        print("something went wrong")
+        print(f"Something went wrong generating insights: {str(e)}")
         error += 1
     if insights:
         for child_concept in insights.concepts:
             child_concept.parent = "-1"
             try:
-                child_insights = generate_insights(paper=Paper(url=child_concept.referenceUrl))
+                child_insights = generate_insights(
+                    paper=Paper(url=child_concept.referenceUrl)
+                )
                 for grandchild_concept in child_insights.concepts:
                     grandchild_concept.parent = child_concept.id
                     child_concept.children.append(grandchild_concept.id)
-                    firestore_client.write_data_to_collection(collection_name="graph", document_name=query.query, data={grandchild_concept.id: dict(grandchild_concept)})
+                    firestore_client.write_data_to_collection(
+                        collection_name="graph",
+                        document_name=query.query,
+                        data={grandchild_concept.id: dict(grandchild_concept)},
+                    )
                     result["-1"][child_concept.id][grandchild_concept.id] = {}
-            except:
+            except Exception as e:
                 error += 1
-                print("something went wrong")
-                child_insights = []
-            
-            firestore_client.write_data_to_collection(collection_name="graph", document_name=query.query, data={child_concept.id: dict(child_concept)})
+                print(f"Something went wrong adding children: {str(e)}")
+                print(e)
+
+            firestore_client.write_data_to_collection(
+                collection_name="graph",
+                document_name=query.query,
+                data={child_concept.id: dict(child_concept)},
+            )
             result["-1"][child_concept.id] = {}
-    hydrated_graph = hydrate_node(input=idGraphSchema(id="-1", query=query.query, id_map=result))
+    hydrated_graph = hydrate_node(
+        input=idGraphSchema(id="-1", query=query.query, id_map=result)
+    )
     return hydrated_graph
+
 
 @app.get("/hydrate-node")
 def hydrate_node(input: idGraphSchema):
@@ -142,17 +159,27 @@ def hydrate_node(input: idGraphSchema):
     result = {}
 
     def helper(cur_id, id_map, result_map):
-        if (cur_id == "-1"):
-            result_map[cur_id] = {"name": input.query, "children": None, "parent": None, "referenceUrl": None}
+        if cur_id == "-1":
+            result_map[cur_id] = {
+                "name": input.query,
+                "children": None,
+                "parent": None,
+                "referenceUrl": None,
+            }
         else:
-            result_map[cur_id] = firestore_client.read_from_document(collection_name="graph", document_name=input.query)[cur_id]
+            result_map[cur_id] = firestore_client.read_from_document(
+                collection_name="graph", document_name=input.query
+            )[cur_id]
         result_map[cur_id]["children"] = []
         for id in id_map.keys():
             new_id_map = id_map[id]
-            result_map[id]["children"].append(helper(id, new_id_map, result_map[cur_id]))
+            result_map[id]["children"].append(
+                helper(id, new_id_map, result_map[cur_id])
+            )
         return result_map[cur_id]
-    
+
     return helper(input.id, input.id_map, result)
+
 
 @app.get("/retrieve-arxiv-search")
 def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> str:
@@ -162,6 +189,7 @@ def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> str:
         collection_name="retrieval", document_name=input.query, data={"papers": papers}
     )
     return "Success"
+
 
 @app.get("/top-paper")
 def get_top_paper(input: TopPaperQuerySchema):
@@ -186,6 +214,9 @@ def generate_insights(paper: Paper) -> PaperInsights:
     pdf_url = paper.url
     paper_text = pdf_url_to_text(pdf_url)
     insights = extract_key_insights(paper_text)
+
+    with open("insight_logs.txt", "a") as f:
+        f.write(json.dumps(insights))
 
     references = insights["references"]
     references = {ref["bibkey"]: ref["title"] for ref in references}
@@ -216,15 +247,23 @@ def generate_insights(paper: Paper) -> PaperInsights:
 
 
 @app.post("/expand-graph-with-new-nodes")
-def expand_graph_with_new_nodes(input: ExpandGraphWithNewInsightsSchema) -> PaperInsights:
+def expand_graph_with_new_nodes(
+    input: ExpandGraphWithNewInsightsSchema,
+) -> PaperInsights:
     result = {input.id: {}}
     firestore_client = get_firestore_client()
     insights = generate_insights(paper=Paper(url=input.concept.referenceUrl))
     for child_concept in insights.concepts:
         result[input.id][child_concept.id] = {}
         child_concept.parent = input.concept.id
-        firestore_client.write_data_to_collection(collection_name="graph", document_name=input.query, data={child_concept.id: dict(child_concept)})
-    hydrated_graph = hydrate_node(input=idGraphSchema(id="-1", query=input.query, id_map=result))
+        firestore_client.write_data_to_collection(
+            collection_name="graph",
+            document_name=input.query,
+            data={child_concept.id: dict(child_concept)},
+        )
+    hydrated_graph = hydrate_node(
+        input=idGraphSchema(id="-1", query=input.query, id_map=result)
+    )
     return hydrated_graph
 
 
