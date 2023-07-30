@@ -10,7 +10,7 @@ def expand(orig_description, paper):
             I also want you to return a 3-5 word name for the key concept.
 
             You will return this result in the following format:
-            <long_description> (THIS IS THE 8-9 SENTENCE INFORMATIVE DESCRIPTION) </long_description>
+            <description> (THIS IS THE 8-9 SENTENCE INFORMATIVE DESCRIPTION) </description>
             <name> (A 3-5 word name for the key concept) </name>
 
             The key concept short description is: {
@@ -22,7 +22,11 @@ def expand(orig_description, paper):
             {paper}
             </text>
 
-            Please surround your response in <response></response> tags.
+            Your final response should look like this:
+            <response>
+            <description> (DESCRIPTION) </description>
+            <name> (NAME of the concept) </name>
+            </response>
         """
     )
     response = expanded
