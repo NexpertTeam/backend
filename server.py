@@ -117,7 +117,8 @@ def send_query(query: Query):
         
         firestore_client.write_data_to_collection(collection_name="graph", document_name=query.query, data={child_concept.id: dict(child_concept)})
         result["-1"][child_concept.id] = {}
-    return result
+    hydrated_graph = hydrate_node(input=idGraphSchema(id="-1", query=query.query))
+    return hydrated_graph
 
 @app.get("/hydrate-node")
 def hydrate_node(input: idGraphSchema):
