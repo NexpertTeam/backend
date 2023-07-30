@@ -49,9 +49,11 @@ class ConceptNode(BaseModel):
     parent: Optional[str] = ""
     children: Optional[List[str]] = []
 
+
 class PaperInsights(BaseModel):
     url: str
     concepts: List[ConceptNode]
+
 
 class QuerySchema(BaseModel):
     query: str
@@ -144,19 +146,21 @@ def generate_insights(paper: Paper) -> PaperInsights:
             url = pdf_url
         concepts.append(
             ConceptNode(
-                referenceUrl=url,
                 name=idea["idea_name"],
+                id=str(uuid.uuid4()),
+                referenceUrl=url,
                 description=idea["description"],
             )
         )
     paper_insights = PaperInsights(url=pdf_url, concepts=concepts)
     return paper_insights
 
+
 @app.post("/expand-graph-with-new-nodes")
 def expand_graph_with_new_nodes(concept: ConceptNode) -> PaperInsights:
     insights = generate_insights(paper=Paper(url=concept.referenceUrl))
-    # for child_concept in insights.concepts:
-    #     child_concept.parent_id = concept.id
+    for child_concept in insights.concepts:
+        child_concept.parent = concept.id
     return insights
 
 
