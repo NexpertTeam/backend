@@ -255,6 +255,7 @@ def generate_insights(paper: Paper) -> PaperInsights:
 
     concepts = []
     for idea in insights["ideas"]:
+        reference_text = ""
         relevant_references = idea["relevant_references"]
         if relevant_references:
             url = ""
@@ -272,6 +273,7 @@ def generate_insights(paper: Paper) -> PaperInsights:
             id=new_uid,
             referenceUrl=url,
             description=idea["description"],
+            referenceText=reference_text,
         )
         concept_map[new_uid] = new_concept
         concepts.append(new_concept)
