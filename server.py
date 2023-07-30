@@ -108,11 +108,8 @@ def generate_insights(paper: TopPaper) -> PaperInsights:
             reference_text = references[first_bibkey]
 
             if "arxiv" in reference_text.lower():
-                # Search paper in arxiv
-                print(f"Searching arxiv for {reference_text}")
                 top_results = arxiv_script.search_arxiv(reference_text)
                 url = top_results[0]["url"]
-                print(f"Paper url: {url}")
             else:
                 url = ""
         else:

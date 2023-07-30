@@ -13,7 +13,6 @@ def parse_insights(insights_text: str) -> dict:
         [bibkey] = extract_tag_content(ref, tag="bibkey")
         [reference_text] = extract_tag_content(ref, tag="reference_text")
         reference_list.append({"bibkey": bibkey, "reference_text": reference_text})
-        print(reference_list)
     output["references"] = reference_list
     ideas = extract_tag_content(insights_text, tag="idea")
     idea_list = []
