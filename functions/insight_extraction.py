@@ -106,6 +106,10 @@ def extract_key_insights(paper_text: str) -> dict:
     {AI_PROMPT} I have identified the paper's title and authors and will ignore it, beyond that, these are the most important references from previous work:
     """
     insights = Claude()(prompt, output_role_or_suffix="")
+
+    with open("claude_insights_logs.txt", "a") as f:
+        f.write(insights + "\n")
+
     try:
         parsed_insights = parse_insights(insights)
     except Exception as e:

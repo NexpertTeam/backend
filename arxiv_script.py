@@ -3,7 +3,7 @@ from functools import lru_cache
 import arxiv
 
 
-@lru_cache(maxsize=100)
+@lru_cache(maxsize=1000)
 def search_arxiv(query, numRecentPapers=5, numMostCitedPapers=5):
     searchRelevance = arxiv.Search(
         query=query,

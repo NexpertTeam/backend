@@ -1,7 +1,16 @@
+from functools import lru_cache
+
 from claude import Claude
 
 
-def top_one(list_of_jsons, user_query):
+def top_one(retrieval_arxiv_output, user_query):
+    papers = [dict(paper) for paper in retrieval_arxiv_output.papers]
+    papers_str = str(papers)
+    return top_one_(papers_str, user_query)
+
+
+@lru_cache(maxsize=1000)
+def top_one_(paper_list_string, user_query):
     top_one = Claude()
     topPaper = top_one(
         f"""I have a set of papers. I also have a query string from a user trying to figure out which paper is most relevant for them. The papers are in the following format:
@@ -22,7 +31,7 @@ def top_one(list_of_jsons, user_query):
 
     The list of papers is:
     {
-        str(list_of_jsons)
+        paper_list_string
     }
     
     The user query string is:

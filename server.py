@@ -2,6 +2,7 @@ import json
 import time
 from typing import List, Optional
 import uuid
+from functools import lru_cache
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -19,12 +20,6 @@ origins = [
 ]
 
 concept_map = {}
-
-
-class RetrieveArxivSearchInput(BaseModel):
-    query: str
-    numRecentPapers: Optional[str]
-    numMostCitedPapers: Optional[str]
 
 
 class TopPaper(BaseModel):
@@ -105,7 +100,7 @@ def read_root():
 @app.post("/query")
 def send_query(query: Query):
     firestore_client = get_firestore_client()
-    retrieve_arxiv_search(query)
+    retrieve_arxiv_search(query.query)
     papers = firestore_client.read_from_document(
         collection_name="retrieval", document_name=query.query
     )
@@ -122,7 +117,7 @@ def send_query(query: Query):
     )
 
     try:
-        insights = generate_insights(paper=Paper(url=topPaper["url"]))
+        insights = generate_insights(pdf_url=topPaper["url"])
     except Exception as e:
         insights = []
         print(f"Something went wrong generating insights: {str(e)}")
@@ -137,7 +132,7 @@ def send_query(query: Query):
             if child_concept.referenceUrl != topPaper["url"]:
                 try:
                     child_insights = generate_insights(
-                        paper=Paper(url=child_concept.referenceUrl)
+                        pdf_url=child_concept.referenceUrl
                     )
                     for grandchild_concept in child_insights.concepts:
                         grandchild_concept.parent = child_concept.id
@@ -213,12 +208,11 @@ def hydrate_node(input: idGraphSchema):
     return helper(input.id, input.id_map)
 
 
-@app.get("/retrieve-arxiv-search")
-def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> str:
+def retrieve_arxiv_search(query: str) -> str:
     firestore_client = get_firestore_client()
-    papers = arxiv_script.search_arxiv(input.query)
+    papers = arxiv_script.search_arxiv(query)
     firestore_client.write_data_to_collection(
-        collection_name="retrieval", document_name=input.query, data={"papers": papers}
+        collection_name="retrieval", document_name=query, data={"papers": papers}
     )
     return "Success"
 
@@ -241,9 +235,7 @@ def get_top_paper(input: TopPaperQuerySchema):
     return topPaper
 
 
-@app.post("/generate-insights")
-def generate_insights(paper: Paper) -> PaperInsights:
-    pdf_url = paper.url
+def generate_insights(pdf_url: str) -> PaperInsights:
     paper_text = pdf_url_to_text(pdf_url)
     insights = extract_key_insights(paper_text)
 
@@ -287,7 +279,7 @@ def expand_graph_with_new_nodes(
 ) -> PaperInsights:
     result = {input.id: {}}
     firestore_client = get_firestore_client()
-    insights = generate_insights(paper=Paper(url=input.concept.referenceUrl))
+    insights = generate_insights(pdf_url=input.concept.referenceUrl)
     for child_concept in insights.concepts:
         result[input.id][child_concept.id] = {}
         child_concept.parent = input.concept.id

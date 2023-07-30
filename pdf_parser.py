@@ -6,14 +6,14 @@ from functools import lru_cache
 from PyPDF2 import PdfReader
 
 
-@lru_cache(maxsize=30)
+@lru_cache(maxsize=1000)
 def pdf_url_to_text(url: str) -> str:
     tempfile = download_pdf(url)
     text = pdf_to_text(tempfile)
     return text
 
 
-@lru_cache(maxsize=30)
+@lru_cache(maxsize=1000)
 def pdf_to_text(path_to_pdf: str) -> str:
     reader = PdfReader(path_to_pdf)
     text = ""

@@ -1,6 +1,8 @@
-from claude import Claude
-import json
+from functools import lru_cache
 
+from claude import Claude
+
+@lru_cache(maxsize=1000)
 def expand(orig_description, paper):
     expander = Claude()
     expanded = expander(
@@ -33,6 +35,7 @@ def expand(orig_description, paper):
     description = response.split("<description>")[1].split("</description>")[0].replace("'", "\"")
     return description
 
+@lru_cache(maxsize=1000)
 def expand_without_paper(orig_description):
     expander = Claude()
     expanded = expander(
