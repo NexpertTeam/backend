@@ -111,14 +111,14 @@ def generate_insights(paper: Paper) -> PaperInsights:
     for idea in insights["ideas"]:
         relevant_references = idea["relevant_references"]
         if relevant_references:
-            first_bibkey = relevant_references[0]
-            reference_text = references[first_bibkey]
+            url = ""
+            while relevant_references and not url:
+                bibkey = relevant_references.pop(0)
+                reference_text = references[bibkey]
 
-            if "arxiv" in reference_text.lower():
-                top_results = arxiv_script.search_arxiv(reference_text)
-                url = top_results[0]["url"]
-            else:
-                url = ""
+                if "arxiv" in reference_text.lower():
+                    top_results = arxiv_script.search_arxiv(reference_text)
+                    url = top_results[0]["url"]
         else:
             url = pdf_url
         concepts.append(
