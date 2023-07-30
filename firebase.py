@@ -24,7 +24,7 @@ class Firebase:
         collection_ref = self.db.collection(collection_name)
         doc_ref = collection_ref.document(document_name)
         doc_ref.set(dict(data), merge=True)
-        print(f"Document added: {doc_ref}")
+        # print(f"Document added: {doc_ref}")
 
     def delete_data_from_collection(self, collection_name, document_id):
         try:
