@@ -74,6 +74,7 @@ class ExpandGraphWithNewInsightsSchema(BaseModel):
     concept: ConceptNode
 
 class idGraphSchema(BaseModel):
+    id_map: dict
     query: str
     id: str
 
