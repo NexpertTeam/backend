@@ -58,18 +58,6 @@ def extract_key_insights(paper_text: str) -> dict:
             </reference_text>
         </bibitem>
     </references>
-    <novel_idea>
-        <idea_name>
-            # A 3-4 word name for the idea
-        </idea_name>
-        <description>
-            # Description of the idea
-        </description>
-    </novel_idea>
-    ...
-    <novel_idea>
-        ...
-    </novel_idea>
     <previous_work_idea>
         <idea_name>
             # A 3-4 word name for the idea
@@ -91,10 +79,22 @@ def extract_key_insights(paper_text: str) -> dict:
     <previous_work_idea>
     ...
     </previous_work_idea>
+    <novel_idea>
+        <idea_name>
+            # A 3-4 word name for the idea
+        </idea_name>
+        <description>
+            # Description of the idea
+        </description>
+    </novel_idea>
+    ...
+    <novel_idea>
+        ...
+    </novel_idea>
     === Paper text ===
     {paper_text}
 
-    Aim for 2-3 novel ideas and 4-6 previous work ideas.
+    Aim for 4-6 previous work ideas and 2-3 novel ideas.
 
     {AI_PROMPT} I have identified the paper's title and authors and will ignore it, beyond that, these are the most important references from previous work:
     """
