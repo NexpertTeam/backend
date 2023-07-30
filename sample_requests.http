@@ -1,6 +1,6 @@
-POST http://0.0.0.0:8000/query
+GET http://127.0.0.1:8000/retrieve-arxiv-search
 content-type: application/json
 
 {
-    "query": "Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Bengio. Neural machine translation by jointly learning to align and translate. arXiv preprint arXiv:1409.0473, 2014."
+    "query": "Transformers and Large Language Models"
 }

@@ -1,6 +1,7 @@
 from typing import List, Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
+from pydantic import parse_obj_as
 from claude import Claude
 import arxiv_script
 from functions.top_one import top_one
@@ -60,7 +61,11 @@ def send_query(query: QuerySchema) -> None:
 
 @app.get("/retrieve-arxiv-search")
 def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> RetrieveArxivSearchOutput:
-    return arxiv_script.search_arxiv(input)
+    initPapers = arxiv_script.search_arxiv(input)
+    papersRet = parse_obj_as(List[Paper], initPapers)
+    finalObj = RetrieveArxivSearchOutput(papers=papersRet)
+    # print(papersRet)
+    return finalObj
 
 
 @app.get("/top-paper")

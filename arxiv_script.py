@@ -23,7 +23,7 @@ def search_arxiv(query, numRecentPapers=5, numMostCitedPapers=5):
                 "title": result.title,
                 "summary": result.summary,
                 "url": result.pdf_url,
-                "publishedDate": result.published,
+                "publishedDate": str(result.published),
             }
         )
     for result in searchDate.results():
@@ -32,8 +32,8 @@ def search_arxiv(query, numRecentPapers=5, numMostCitedPapers=5):
                 "title": result.title,
                 "summary": result.summary,
                 "url": result.pdf_url,
-                "publishedDate": result.published,
+                "publishedDate": str(result.published),
             }
         )
-
+    # papers = 
     return papers
