@@ -289,7 +289,7 @@ def expand_graph_with_new_nodes(
             data={child_concept.id: dict(child_concept)},
         )
     hydrated_graph = hydrate_node(
-        input=idGraphSchema(id="-1", query=input.query, id_map=result)
+        input=idGraphSchema(id=input.id, query=input.query, id_map=result)
     )
     return hydrated_graph
 
