@@ -18,13 +18,18 @@ def parse_insights(insights_text: str) -> dict:
     ideas = extract_tag_content(insights_text, tag="idea")
     idea_list = []
     for idea in ideas:
+        [idea_name] = extract_tag_content(idea, tag="idea_name")
         [description] = extract_tag_content(idea, tag="description")
         relevant_references = extract_tag_content(idea, tag="relevant_references")
         relevant_references = [
             extract_tag_content(ref, tag="bibkey")[0] for ref in relevant_references
         ]
         idea_list.append(
-            {"description": description, "relevant_references": relevant_references}
+            {
+                "idea_name": idea_name,
+                "description": description,
+                "relevant_references": relevant_references,
+            }
         )
     output["ideas"] = idea_list
     return output
@@ -44,6 +49,9 @@ def extract_key_insights(paper_text: str) -> dict:
         </bibitem>
     </references>
     <idea>
+        <idea_name>
+            # A 3-4 word name for the idea
+        </idea_name>
         <description>
             # Description of the idea
         </description>
