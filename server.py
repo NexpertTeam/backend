@@ -1,14 +1,14 @@
+import time
 from typing import List, Optional
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-from firebase import get_firestore_client
-
 import arxiv_script
 from functions.top_one import top_one
 from functions.expand_description_to_text import expand, expand_without_paper
 from pdf_parser import pdf_url_to_text
 from functions.insight_extraction import extract_key_insights
+from firebase import get_firestore_client
 
 
 class RetrieveArxivSearchInput(BaseModel):
@@ -156,10 +156,13 @@ def expand_graph_with_new_nodes(concept: ConceptNode) -> PaperInsights:
 @app.post("/more-info")
 def more_information(concept: ConceptNode) -> str:
     url = concept.referenceUrl
+    things = time.time()
     if url == "":
         return expand_without_paper(concept.description)
     else:
+        print(time.time() - things)
         paper_text = pdf_url_to_text(concept.referenceUrl)
+        print(time.time() - things)
         return expand(concept.description, paper_text)
 
 
