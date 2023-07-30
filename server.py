@@ -8,6 +8,7 @@ import arxiv_script
 from functions.top_one import top_one
 from pdf_parser import pdf_url_to_text
 from functions.insight_extraction import extract_key_insights
+from firebase import get_firestore_client
 
 
 class RetrieveArxivSearchInput(BaseModel):
@@ -28,6 +29,10 @@ class Paper(BaseModel):
     title: str
     summary: str
     publishedDate: str
+
+
+class Query(BaseModel):
+    query: str
 
 
 class RetrieveArxivSearchOutput(BaseModel):
@@ -62,17 +67,19 @@ def read_root():
 
 # public-facing endpoint
 @app.post("/query")
-def send_query(query: QuerySchema) -> None:
+def send_query(query: Query) -> None:
+    print("i got here")
     return retrieve_arxiv_search(query.query)
 
 
 @app.get("/retrieve-arxiv-search")
 def retrieve_arxiv_search(input: RetrieveArxivSearchInput) -> RetrieveArxivSearchOutput:
-    initPapers = arxiv_script.search_arxiv(input)
-    papersRet = parse_obj_as(List[Paper], initPapers)
-    finalObj = RetrieveArxivSearchOutput(papers=papersRet)
-    # print(papersRet)
-    return finalObj
+    firestore_client = get_firestore_client()
+    papers = arxiv_script.search_arxiv(input)
+    firestore_client.write_data_to_collection(
+        collection_name="retrieval", document_id=input, data={"papers": papers}
+    )
+    return
 
 
 @app.get("/top-paper")
@@ -89,7 +96,7 @@ def get_top_paper(input: TopPaperQuerySchema) -> TopPaper:
     return topPaper
 
 
-@app.get("/generate-insights")
+@app.post("/generate-insights")
 def generate_insights(paper: TopPaper) -> PaperInsights:
     pdf_url = paper.url
     paper_text = pdf_url_to_text(pdf_url)
@@ -106,7 +113,6 @@ def generate_insights(paper: TopPaper) -> PaperInsights:
             reference_text = references[first_bibkey]
 
             if "arxiv" in reference_text.lower():
-                # Search paper in arxiv
                 top_results = arxiv_script.search_arxiv(reference_text)
                 url = top_results[0]["url"]
             else:
