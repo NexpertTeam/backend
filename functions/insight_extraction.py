@@ -14,9 +14,20 @@ def parse_insights(insights_text: str) -> dict:
         [reference_text] = extract_tag_content(ref, tag="reference_text")
         reference_list.append({"bibkey": bibkey, "reference_text": reference_text})
     output["references"] = reference_list
-    ideas = extract_tag_content(insights_text, tag="idea")
+    new_ideas = extract_tag_content(insights_text, tag="novel_idea")
     idea_list = []
-    for idea in ideas:
+    for idea in new_ideas:
+        [idea_name] = extract_tag_content(idea, tag="idea_name")
+        [description] = extract_tag_content(idea, tag="description")
+        idea_list.append(
+            {
+                "idea_name": idea_name,
+                "description": description,
+                "relevant_references": [],
+            }
+        )
+    previous_work_ideas = extract_tag_content(insights_text, tag="previous_work_idea")
+    for idea in previous_work_ideas:
         [idea_name] = extract_tag_content(idea, tag="idea_name")
         [description] = extract_tag_content(idea, tag="description")
         relevant_references = extract_tag_content(idea, tag="relevant_references")
@@ -35,8 +46,8 @@ def parse_insights(insights_text: str) -> dict:
 
 
 def extract_key_insights(paper_text: str) -> dict:
-    prompt = f"""List the most important ideas in the paper that build
-    upon previous work (avoid referencing the paper itself) and then output the list of ideas in the following format:
+    prompt = f"""List the most important ideas in the paper separate totally novel ideas
+    from those that build upon previous work (both are VERY important) and then output the list of ideas in the following format:
     <references>
         <bibitem>
             <bibkey>
@@ -47,7 +58,19 @@ def extract_key_insights(paper_text: str) -> dict:
             </reference_text>
         </bibitem>
     </references>
-    <idea>
+    <novel_idea>
+        <idea_name>
+            # A 3-4 word name for the idea
+        </idea_name>
+        <description>
+            # Description of the idea
+        </description>
+    </novel_idea>
+    ...
+    <novel_idea>
+        ...
+    </novel_idea>
+    <previous_work_idea>
         <idea_name>
             # A 3-4 word name for the idea
         </idea_name>
@@ -63,18 +86,19 @@ def extract_key_insights(paper_text: str) -> dict:
             ...
             </bibkey>
         </relevant_references>
-    </idea>
+    </previous_work_idea>
     ...
-    <idea>
+    <previous_work_idea>
     ...
-    </idea>
+    </previous_work_idea>
     === Paper text ===
     {paper_text}
 
-    Aim for 4-6 individual ideas.
+    Aim for 2-3 novel ideas and 4-6 previous work ideas.
 
     {AI_PROMPT} I have identified the paper's title and authors and will ignore it, beyond that, these are the most important references from previous work:
     """
     insights = Claude()(prompt, output_role_or_suffix="")
+    print(insights)
     insights = parse_insights(insights)
     return insights
