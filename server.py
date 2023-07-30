@@ -70,6 +70,7 @@ class TopPaperQuerySchema(BaseModel):
     papers: RetrieveArxivSearchOutput
 
 class ExpandGraphWithNewInsightsSchema(BaseModel):
+    id: str
     query: str
     concept: ConceptNode
 
@@ -115,23 +116,24 @@ def send_query(query: Query):
         insights = []
         print("something went wrong")
         error += 1
-    for child_concept in insights.concepts:
-        child_concept.parent = "-1"
-        try:
-            child_insights = generate_insights(paper=Paper(url=child_concept.referenceUrl))
-            for grandchild_concept in child_insights.concepts:
-                grandchild_concept.parent = child_concept.id
-                child_concept.children.append(grandchild_concept.id)
-                firestore_client.write_data_to_collection(collection_name="graph", document_name=query.query, data={grandchild_concept.id: dict(grandchild_concept)})
-                result["-1"][child_concept.id][grandchild_concept.id] = {}
-        except:
-            error += 1
-            print("something went wrong")
-            child_insights = []
-        
-        firestore_client.write_data_to_collection(collection_name="graph", document_name=query.query, data={child_concept.id: dict(child_concept)})
-        result["-1"][child_concept.id] = {}
-    hydrated_graph = hydrate_node(input=idGraphSchema(id="-1", query=query.query))
+    if insights:
+        for child_concept in insights.concepts:
+            child_concept.parent = "-1"
+            try:
+                child_insights = generate_insights(paper=Paper(url=child_concept.referenceUrl))
+                for grandchild_concept in child_insights.concepts:
+                    grandchild_concept.parent = child_concept.id
+                    child_concept.children.append(grandchild_concept.id)
+                    firestore_client.write_data_to_collection(collection_name="graph", document_name=query.query, data={grandchild_concept.id: dict(grandchild_concept)})
+                    result["-1"][child_concept.id][grandchild_concept.id] = {}
+            except:
+                error += 1
+                print("something went wrong")
+                child_insights = []
+            
+            firestore_client.write_data_to_collection(collection_name="graph", document_name=query.query, data={child_concept.id: dict(child_concept)})
+            result["-1"][child_concept.id] = {}
+    hydrated_graph = hydrate_node(input=idGraphSchema(id="-1", query=query.query, id_map=result))
     return hydrated_graph
 
 @app.get("/hydrate-node")
@@ -140,8 +142,11 @@ def hydrate_node(input: idGraphSchema):
     result = {}
 
     def helper(cur_id, id_map, result_map):
-        result_map[cur_id] = firestore_client.read_from_document(collection_name="graph", document_name=input.query)[cur_id]
-        result_map[id]["children"] = []
+        if (cur_id == "-1"):
+            result_map[cur_id] = {"name": input.query, "children": None, "parent": None, "referenceUrl": None}
+        else:
+            result_map[cur_id] = firestore_client.read_from_document(collection_name="graph", document_name=input.query)[cur_id]
+        result_map[cur_id]["children"] = []
         for id in id_map.keys():
             new_id_map = id_map[id]
             result_map[id]["children"].append(helper(id, new_id_map, result_map[cur_id]))
@@ -212,12 +217,15 @@ def generate_insights(paper: Paper) -> PaperInsights:
 
 @app.post("/expand-graph-with-new-nodes")
 def expand_graph_with_new_nodes(input: ExpandGraphWithNewInsightsSchema) -> PaperInsights:
+    result = {input.id: {}}
     firestore_client = get_firestore_client()
     insights = generate_insights(paper=Paper(url=input.concept.referenceUrl))
     for child_concept in insights.concepts:
+        result[input.id][child_concept.id] = {}
         child_concept.parent = input.concept.id
         firestore_client.write_data_to_collection(collection_name="graph", document_name=input.query, data={child_concept.id: dict(child_concept)})
-    return insights
+    hydrated_graph = hydrate_node(input=idGraphSchema(id="-1", query=input.query, id_map=result))
+    return hydrated_graph
 
 
 @app.post("/more-info")
