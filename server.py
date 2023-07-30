@@ -41,6 +41,10 @@ class PaperInsights(BaseModel):
     concepts: List[ConceptNodes]
 
 
+class QuerySchema(BaseModel):
+    query: str
+
+
 app = FastAPI()
 
 
@@ -51,8 +55,8 @@ def read_root():
 
 # public-facing endpoint
 @app.post("/query")
-def send_query(query: str) -> None:
-    return retrieve_arxiv_search(query)
+def send_query(query: QuerySchema) -> None:
+    return retrieve_arxiv_search(query.query)
 
 
 @app.get("/retrieve-arxiv-search")
