@@ -13,9 +13,14 @@ def parse_insights(insights_text: str) -> dict:
     reference_list = []
     for ref in references:
         [bibkey] = extract_tag_content(ref, tag="bibkey")
+        bibkey = bibkey.strip()
+        bibkey = bibkey.strip("\n")
+        bibkey = bibkey.strip()
         [reference_text] = extract_tag_content(ref, tag="reference_text")
         [title] = extract_tag_content(ref, tag="title")
-        reference_list.append({"bibkey": bibkey, "reference_text": reference_text, "title": title})
+        reference_list.append(
+            {"bibkey": bibkey, "reference_text": reference_text, "title": title}
+        )
     output["references"] = reference_list
     new_ideas = extract_tag_content(insights_text, tag="novel_idea")
     idea_list = []
@@ -107,7 +112,7 @@ def extract_key_insights(paper_text: str) -> dict:
     """
     insights = Claude()(prompt, output_role_or_suffix="")
 
-    with open("claude_insights_logs.txt", "a") as f:
+    with open("claude_insights_logs.txt", "a", encoding="utf-8") as f:
         f.write(insights + "\n")
 
     try:
