@@ -100,15 +100,21 @@ def read_root():
 @app.post("/query")
 def send_query(query: Query):
     firestore_client = get_firestore_client()
-    retrieve_arxiv_search(query.query)
-    papers = firestore_client.read_from_document(
-        collection_name="retrieval", document_name=query.query
-    )
-    getTopPaperInput = TopPaperQuerySchema(query=query.query, papers=papers)
-    try:
-        topPaper = get_top_paper(getTopPaperInput)
-    except:
-        topPaper = get_top_paper(getTopPaperInput)
+    if query.query.startswith("http") and query.query.endswith(".pdf"):
+        top_paper_url = query.query
+    else:
+        retrieve_arxiv_search(query.query)
+        papers = firestore_client.read_from_document(
+            collection_name="retrieval", document_name=query.query
+        )
+        getTopPaperInput = TopPaperQuerySchema(query=query.query, papers=papers)
+        try:
+            topPaper = get_top_paper(getTopPaperInput)
+        except:
+            topPaper = get_top_paper(getTopPaperInput)
+
+        top_paper_url = topPaper["url"]
+
     error = 0
     result = {"-1": dict()}
 
@@ -117,7 +123,7 @@ def send_query(query: Query):
     )
 
     try:
-        insights = generate_insights(pdf_url=topPaper["url"])
+        insights = generate_insights(pdf_url=top_paper_url)
     except Exception as e:
         insights = []
         print(f"Something went wrong generating insights: {str(e)}")
@@ -129,7 +135,7 @@ def send_query(query: Query):
                 # Initialize child first
                 result["-1"][child_concept.id] = {}
             child_result = result["-1"][child_concept.id]
-            if child_concept.referenceUrl != topPaper["url"]:
+            if child_concept.referenceUrl != top_paper_url:
                 try:
                     child_insights = generate_insights(
                         pdf_url=child_concept.referenceUrl
